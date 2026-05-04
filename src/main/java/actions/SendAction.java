@@ -15,8 +15,14 @@ import com.intellij.openapi.util.TextRange;
 import dto.ImageDTO;
 import messages.MyMessageBundle;
 import org.jetbrains.annotations.NotNull;
+import dto.ResponseDTO;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import requests.PostImageRequest;
 import services.ImageService;
+import java.net.http.HttpResponse;
 
 public class SendAction extends AnAction {
 
@@ -52,26 +58,60 @@ public class SendAction extends AnAction {
                 try {
                     indicator.setText(MyMessageBundle.message("process.image"));
                     String image = ImageService.createImage(capturedText);
+                    String imageHash = ImageService.createImageHash(capturedText);
 
                     indicator.setText(MyMessageBundle.message("image.upload"));
-                    PostImageRequest.uploadImage(new ImageDTO(project.getName(), image));
+                    HttpResponse<String> response = PostImageRequest.uploadImage(new ImageDTO(project.getName(), imageHash, image));
 
-                    showNotification(project, MyMessageBundle.message("dialog.title.success"), MyMessageBundle.message("success.captured"), NotificationType.INFORMATION);
+                    if (response.statusCode() == 200) {
+                        ResponseDTO responseDTO = parseResponse(response.body());
+                        String content = String.format(
+                                "Type: %s\nProject: %s\nAuthor: %s\nQuality: %s",
+                                responseDTO.predict().get(0),
+                                responseDTO.predict().get(1),
+                                responseDTO.predict().get(2),
+                                responseDTO.predict().get(3)
+                        );
+                        showNotification(project, MyMessageBundle.message("dialog.title.success"), content, NotificationType.INFORMATION);
+                    } else {
+                        showNotification(project, MyMessageBundle.message("dialog.title.warning"), "Error: " + response.statusCode() + " - " + response.body(), NotificationType.ERROR);
+                    }
 
                 } catch (Exception ex) {
-                    showNotification(project, MyMessageBundle.message("dialog.title.warning"), MyMessageBundle.message("error.generic"), NotificationType.ERROR);
+                    ex.printStackTrace();
+                    // showNotification(project, MyMessageBundle.message("dialog.title.warning"), ex.getMessage() != null ? ex.getMessage() : MyMessageBundle.message("error.generic"), NotificationType.ERROR);
+                    showNotification(project, MyMessageBundle.message("dialog.title.warning"), ex.getMessage() , NotificationType.ERROR);
                 }
             }
         });
     }
-
-    /**
-     * Método auxiliar para não repetir o código do NotificationGroupManager toda hora.
-     */
     private void showNotification(Project project, String title, String content, NotificationType type) {
         NotificationGroupManager.getInstance()
                 .getNotificationGroup("SourceCodeMinimaps.Notifications")
                 .createNotification(title, content, type)
                 .notify(project);
+    }
+
+    private ResponseDTO parseResponse(String json) {
+        String hash = "";
+        Pattern hashPattern = Pattern.compile("\"hash\"\\s*:\\s*\"([^\"]*)\"");
+        Matcher hashMatcher = hashPattern.matcher(json);
+        if (hashMatcher.find()) {
+            hash = hashMatcher.group(1);
+        }
+
+        List<String> predict = new ArrayList<>();
+        Pattern predictPattern = Pattern.compile("\"predict\"\\s*:\\s*\\[([^\\]]*)\\]");
+        Matcher predictMatcher = predictPattern.matcher(json);
+        if (predictMatcher.find()) {
+            String arrayContent = predictMatcher.group(1);
+            Pattern itemPattern = Pattern.compile("\"([^\"]*)\"");
+            Matcher itemMatcher = itemPattern.matcher(arrayContent);
+            while (itemMatcher.find()) {
+                predict.add(itemMatcher.group(1));
+            }
+        }
+
+        return new ResponseDTO(hash, predict);
     }
 }

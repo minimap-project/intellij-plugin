@@ -1,4 +1,6 @@
 package dto;
 
-public record ResponseDTO(String description,String author) {
+import java.util.List;
+
+public record ResponseDTO(String hash, List<String> predict) {
 }
