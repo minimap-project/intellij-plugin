@@ -10,7 +10,7 @@ import java.nio.charset.StandardCharsets;
 
 public class PostImageRequest {
     public static HttpResponse<String> uploadImage(ImageDTO image) throws Exception {
-        String url = "http://98.85.228.131:8000/api/v1/analyze/image";
+            String url = "http://54.227.99.241:8000/api/v1/analyze/image";
         String apiKey = System.getenv("MINIMAPS_API");
         String jsonBody = String.format(
                 "{\"project\": \"%s\", \"hash\": \"%s\", \"image\": \"%s\"}",

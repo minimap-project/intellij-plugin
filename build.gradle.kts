@@ -21,13 +21,13 @@ repositories {
 
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
-    intellijPlatform {
+        intellijPlatform {
         intellijIdea(providers.gradleProperty("platformVersion"))
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
 
         // Add plugin dependencies for compilation here, for example:
         // bundledPlugin("com.intellij.java")
-
+        bundledPlugin("org.intellij.plugins.markdown")
     }
 }
 

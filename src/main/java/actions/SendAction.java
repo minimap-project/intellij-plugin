@@ -1,28 +1,31 @@
 package actions;
 
+import com.google.gson.Gson;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.testFramework.LightVirtualFile;
 import dto.ImageDTO;
 import messages.MyMessageBundle;
 import org.jetbrains.annotations.NotNull;
 import dto.ResponseDTO;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import requests.PostImageRequest;
 import services.ImageService;
 import java.net.http.HttpResponse;
+import javax.swing.*;
 
 public class SendAction extends AnAction {
 
@@ -64,15 +67,9 @@ public class SendAction extends AnAction {
                     HttpResponse<String> response = PostImageRequest.uploadImage(new ImageDTO(project.getName(), imageHash, image));
 
                     if (response.statusCode() == 200) {
-                        ResponseDTO responseDTO = parseResponse(response.body());
-                        String content = String.format(
-                                "Type: %s\nProject: %s\nAuthor: %s\nQuality: %s",
-                                responseDTO.predict().get(0),
-                                responseDTO.predict().get(1),
-                                responseDTO.predict().get(2),
-                                responseDTO.predict().get(3)
-                        );
-                        showNotification(project, MyMessageBundle.message("dialog.title.success"), content, NotificationType.INFORMATION);
+//                        System.out.println(response.body());
+                        ResponseDTO responseDTO = new Gson().fromJson(response.body(), ResponseDTO.class);
+                        openAnalysisResult(project, responseDTO);
                     } else {
                         showNotification(project, MyMessageBundle.message("dialog.title.warning"), "Error: " + response.statusCode() + " - " + response.body(), NotificationType.ERROR);
                     }
@@ -92,26 +89,41 @@ public class SendAction extends AnAction {
                 .notify(project);
     }
 
-    private ResponseDTO parseResponse(String json) {
-        String hash = "";
-        Pattern hashPattern = Pattern.compile("\"hash\"\\s*:\\s*\"([^\"]*)\"");
-        Matcher hashMatcher = hashPattern.matcher(json);
-        if (hashMatcher.find()) {
-            hash = hashMatcher.group(1);
-        }
+    private void openAnalysisResult(Project project, ResponseDTO response) {
+        StringBuilder markdownContent = new StringBuilder();
+        markdownContent.append("# Source Code Analysis Result\n\n");
+        markdownContent.append("## Metadata\n");
+        markdownContent.append("- **Hash:** `").append(response.hash()).append("`\n\n");
 
-        List<String> predict = new ArrayList<>();
-        Pattern predictPattern = Pattern.compile("\"predict\"\\s*:\\s*\\[([^\\]]*)\\]");
-        Matcher predictMatcher = predictPattern.matcher(json);
-        if (predictMatcher.find()) {
-            String arrayContent = predictMatcher.group(1);
-            Pattern itemPattern = Pattern.compile("\"([^\"]*)\"");
-            Matcher itemMatcher = itemPattern.matcher(arrayContent);
-            while (itemMatcher.find()) {
-                predict.add(itemMatcher.group(1));
+        markdownContent.append("## Predictions\n");
+        if (response.predict() != null && !response.predict().isEmpty()) {
+            for (ResponseDTO.TargetPrediction targetPred : response.predict()) {
+                markdownContent.append("### ").append(targetPred.target().toUpperCase()).append("\n");
+                markdownContent.append("| Class | Confidence |\n");
+                markdownContent.append("| :--- | :--- |\n");
+                for (ResponseDTO.Prediction pred : targetPred.predictions()) {
+                    markdownContent.append("| `").append(pred.className()).append("` | ").append(String.format("%.2f%%", pred.confidence() * 100)).append(" |\n");
+                }
+                markdownContent.append("\n");
             }
+        } else {
+            markdownContent.append("No prediction data available.\n");
         }
 
-        return new ResponseDTO(hash, predict);
+        markdownContent.append("\n---\n*Generated by SourceCodeMinimaps*");
+
+        String fileName = "AnalysisResult_" + response.hash().substring(0, Math.min(8, response.hash().length())) + ".md";
+        LightVirtualFile virtualFile = new LightVirtualFile(fileName, FileTypeManager.getInstance().getFileTypeByExtension("md"), markdownContent.toString());
+
+        ApplicationManager.getApplication().invokeLater(() -> {
+            FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
+            EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
+
+            if (currentWindow != null) {
+                currentWindow.split(SwingConstants.VERTICAL, true, virtualFile, true);
+            } else {
+                fileEditorManager.openFile(virtualFile, true);
+            }
+        });
     }
 }
