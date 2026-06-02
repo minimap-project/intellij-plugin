@@ -1,38 +1,42 @@
-# SourceCodeMinimaps
+# SourceCodeMinimaps — IntelliJ IDEA Plugin
 
-SourceCodeMinimaps is an IntelliJ IDEA plugin that transforms your source code into a visual "minimap" image. It captures the essence of your code's structure and uploads it as a grayscale representation to a remote server.
+IntelliJ IDEA plugin for the MinimapSignatures ecosystem
+(https://github.com/minimap-project). It turns the active source file into a
+128x128 grayscale minimap, sends it to the analysis backend, and shows the
+predicted programming language, project, and author in a balloon notification.
 
-## 🚀 Features
+## How it works
 
-- **Code-to-Image Transformation**: Captures up to 128 lines of code from your active editor.
-- **Grayscale Mapping**: Each character is intelligently mapped to a specific grayscale intensity (0-255) based on its type (letters, digits, whitespace).
-- **Automated Upload**: Encodes the generated minimap into a Base64 PNG and prepares it for transmission to a centralized server.
-- **Easy Access**: Trigger the capture directly from the Editor Popup Menu (right-click) or the Main Toolbar.
+1. Captures up to 128 lines from the active editor.
+2. Maps each character to a grayscale pixel (the same encoding used to train the
+   model) and builds a 128x128 `BufferedImage`.
+3. Encodes the image as a base64 PNG and sends it to the backend via HTTP POST.
+4. Displays the ranked predictions returned by the backend.
 
-## 🛠️ How It Works
+## Project structure
 
-1. **Capture**: The plugin reads the first 128 lines of your current file.
-2. **Process**: It iterates through every character, converting them into grayscale pixels using a specialized mapping service.
-3. **Render**: A 128x128 grayscale `BufferedImage` is generated.
-4. **Transmit**: The image is converted to Base64 and sent via an HTTP POST request along with the project name.
+- `actions.SendAction`: handles the UI interaction and coordinates the capture.
+- `services.ImageService`: pixel mapping and image generation.
+- `requests.PostImageRequest`: network communication with the backend.
+- `dto.ImageDTO`: data object for image transmission.
 
-## 📦 Project Structure
+## Requirements
 
-- `actions.SendAction`: Handles the UI interaction and coordinates the capture process.
-- `services.ImageService`: Contains the core logic for pixel mapping and image generation.
-- `requests.PostImageRequest`: Manages the network communication with the backend server.
-- `dto.ImageDTO`: Standardized data object for image transmission.
+- JDK 17 or newer.
+- A running analysis backend. Start the `back-end-pytorch` service first; by
+  default the plugin calls `http://localhost:8000/api/v1/analyze/image`.
 
-## 🔧 Installation & Setup
+## Running in development
 
-### Development
-1. Clone the repository.
+1. Make sure the backend is running on `http://localhost:8000`.
 2. Open the project in IntelliJ IDEA.
-3. Use the Gradle `Run Plugin` configuration to launch a development instance of the IDE with the plugin enabled.
+3. Use the Gradle `Run Plugin` run configuration to launch a development IDE
+   instance with the plugin enabled.
+4. Open a file and trigger the action from the editor popup menu (right-click)
+   or the main toolbar.
 
-### Configuration
-Update the `url` constant in `src/main/java/requests/PostImageRequest.java` to point to your desired endpoint before building the plugin for production.
+## Configuration
 
----
-
-*Developed as a tool for visual source code analysis and remote synchronization.*
+The backend URL and API key are defined as constants at the top of
+`src/main/java/requests/PostImageRequest.java` (`API_URL` and `API_KEY`). Change
+`API_URL` if your backend runs on a different host or port.

@@ -9,9 +9,10 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
 public class PostImageRequest {
+    private static final String API_URL = "http://localhost:8000/api/v1/analyze/image";
+    private static final String API_KEY = "m1n1m4p-pesquisa-2025";
+
     public static HttpResponse<String> uploadImage(ImageDTO image) throws Exception {
-            String url = "http://54.227.99.241:8000/api/v1/analyze/image";
-        String apiKey = System.getenv("MINIMAPS_API");
         String jsonBody = String.format(
                 "{\"project\": \"%s\", \"hash\": \"%s\", \"image\": \"%s\"}",
                 image.projectName().replace("\"", "\\\""),
@@ -19,13 +20,10 @@ public class PostImageRequest {
                 image.base64Image()
         );
 
-        if (apiKey == null || apiKey.isEmpty()) {
-            throw new Exception("Coloque a key da api nos variaveis do sistema.");
-        }
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
+                .uri(URI.create(API_URL))
                 .header("Content-Type", "application/json")
-                .header("X-Api-Key", apiKey)
+                .header("X-Api-Key", API_KEY)
                 .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
                 .build();
 

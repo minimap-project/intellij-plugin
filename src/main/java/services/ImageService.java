@@ -9,25 +9,30 @@ import java.security.MessageDigest;
 import java.util.Base64;
 
 public class ImageService {
-    public static String createImage(String img) throws Exception {
-        BufferedImage image = new BufferedImage(128, 128, BufferedImage.TYPE_BYTE_GRAY);
+    private static final int IMAGE_SIZE = 128;
+    private static final int PADDING = 8; // borda preta de 8px em cima e à esquerda (igual ao dataset de treino)
 
-        int x = 0;
-        int y = 0;
+    public static String createImage(String img) throws Exception {
+        BufferedImage image = new BufferedImage(IMAGE_SIZE, IMAGE_SIZE, BufferedImage.TYPE_BYTE_GRAY);
+
+        // O código começa no pixel (PADDING, PADDING), não no (0, 0).
+        // A área de padding já fica preta porque TYPE_BYTE_GRAY inicializa em 0.
+        int x = PADDING;
+        int y = PADDING;
 
         for (char c : img.toCharArray()) {
 
             if (c == '\n') {
                 y++;
-                x = 0;
+                x = PADDING;
 
-                if (y >= 128) {
+                if (y >= IMAGE_SIZE) {
                     break;
                 }
                 continue;
             }
 
-            if (x >= 128) {
+            if (x >= IMAGE_SIZE) {
                 continue;
             }
 
@@ -44,18 +49,16 @@ public class ImageService {
 
     public static int convertChar(char c) {
         int ascii = (int) c;
-        if (ascii >= 0 && ascii <= 32) {
-            return 0;
+        if (ascii < 32) {
+            return 0;            // controles (newline, tab, etc.) → preto
         } else if (ascii >= 48 && ascii <= 57) {
-            return 53;
+            return 53;           // dígitos → cinza 53
         } else if (ascii >= 65 && ascii <= 90) {
-            return 77;
+            return 77;           // maiúsculas → cinza 77
         } else if (ascii >= 97 && ascii <= 122) {
-            return 109;
-        } else if (ascii >= 122 && ascii <= 127) {
-            return ascii;
+            return 109;          // minúsculas → cinza 109
         } else {
-            return 127;
+            return ascii;        // resto (espaço=32, pontuação, símbolos) → valor ASCII cru
         }
     }
 
