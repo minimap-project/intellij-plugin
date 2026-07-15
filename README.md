@@ -1,76 +1,42 @@
 # MinimapSignatures — IntelliJ IDEA Plugin
 
-IntelliJ IDEA plugin for the MinimapSignatures ecosystem. It converts the
-active source file into a 128×128 grayscale minimap image, sends it to the
-analysis backend, and displays the top predictions for programming language,
-project, and author in a balloon notification.
+IntelliJ IDEA plugin that converts the active source file into a 128×128 grayscale minimap, sends it to the analysis backend, and shows the predicted programming language, project, and author in a balloon notification.
 
 ## Paper
 
-This artifact is associated with the following accepted paper:
+> **MinimapSignatures: Source-Code Identification via Grayscale Minimap Images**
+> CBSoft 2026 — [paper.pdf](paper.pdf)
 
-> **MinimapSignatures: Source-Code Identification via Grayscale Minimap Images**  
-> CBSoft 2026  
-> [📄 paper.pdf](paper.pdf)
-
-## Repository Organisation
+## Contents
 
 ```
-intellij-plugin/   ← source code (Gradle project, IntelliJ plugin)
-LICENSE            ← MIT License
-README.md          ← this file
-paper.pdf          ← accepted paper
+intellij-plugin/
+  src/                 — Java source code
+  build.gradle.kts     — Gradle build script
+  gradle/              — Gradle wrapper
+  gradlew / gradlew.bat
+LICENSE
+README.md
+paper.pdf
 ```
-
-The `intellij-plugin/` subdirectory contains:
-- `build.gradle.kts` — Gradle build script (IntelliJ Plugin Gradle DSL)
-- `settings.gradle.kts` / `gradle.properties` — Gradle configuration
-- `gradlew` / `gradlew.bat` — Gradle wrapper scripts
-- `src/` — Java source code
-  - `actions/SendAction.java` — UI interaction and capture coordination
-  - `services/ImageService.java` — pixel mapping and image generation
-  - `requests/PostImageRequest.java` — HTTP communication with the backend
-  - `dto/ImageDTO.java` — data object for image transmission
 
 ## Requirements
 
-- **JDK 17** or newer (must be set as the project SDK in IntelliJ IDEA)
-- **IntelliJ IDEA** (Community or Ultimate, 2023.1+)
-- A running instance of the **MinimapSignatures backend** on
-  `http://localhost:8000` (see the `back-end` artifact)
+- JDK 17+
+- IntelliJ IDEA 2023.1+ (Community or Ultimate)
+- MinimapSignatures backend running on `http://localhost:8000`
 
 ## Installation
 
-### Running in development mode
-
 ```bash
-# 1. Clone / open the intellij-plugin/ folder in IntelliJ IDEA
-
-# 2. Make sure the backend is running on http://localhost:8000
-
-# 3. Run the plugin in a sandbox IDE using the Gradle wrapper:
+# open intellij-plugin/ in IntelliJ IDEA, then run:
 ./gradlew runIde
 ```
 
-Alternatively, open the project in IntelliJ IDEA and use the pre-configured
-**Run Plugin** run configuration (`.run/`).
+A sandbox IntelliJ IDE will open with the plugin enabled. Open any source file, right-click in the editor, and select **MinimapSignatures: Analyse**. A balloon notification with the top-3 predictions should appear.
 
-**Verify the installation:**
-
-1. The sandbox IntelliJ IDE opens.
-2. Open any source file.
-3. Right-click in the editor and select the **MinimapSignatures: Analyse**
-   action (or trigger it from the main toolbar).
-4. A balloon notification appears with the top-3 predictions for language,
-   project, and author.
-
-### Configuration
-
-The backend URL and API key are constants at the top of
-`intellij-plugin/src/main/java/requests/PostImageRequest.java`
-(`API_URL` and `API_KEY`). Change `API_URL` if your backend runs on a
-different host or port.
+The backend URL and API key are defined as constants at the top of `src/main/java/requests/PostImageRequest.java`.
 
 ## License
 
-This artifact is distributed under the **MIT License** — see [`LICENSE`](LICENSE).
+MIT — see [LICENSE](LICENSE).
