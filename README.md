@@ -1,42 +1,42 @@
-# SourceCodeMinimaps — IntelliJ IDEA Plugin
+# MinimapSignatures — IntelliJ IDEA Plugin
 
-IntelliJ IDEA plugin for the MinimapSignatures ecosystem
-(https://github.com/minimap-project). It turns the active source file into a
-128x128 grayscale minimap, sends it to the analysis backend, and shows the
-predicted programming language, project, and author in a balloon notification.
+IntelliJ IDEA plugin that converts the active source file into a 128×128 grayscale minimap, sends it to the analysis backend, and shows the predicted programming language, project, and author in a balloon notification.
 
-## How it works
+## Paper
 
-1. Captures up to 128 lines from the active editor.
-2. Maps each character to a grayscale pixel (the same encoding used to train the
-   model) and builds a 128x128 `BufferedImage`.
-3. Encodes the image as a base64 PNG and sends it to the backend via HTTP POST.
-4. Displays the ranked predictions returned by the backend.
+> **MinimapSignatures: Source-Code Identification via Grayscale Minimap Images**
+> CBSoft 2026 — [paper.pdf](paper.pdf)
 
-## Project structure
+## Contents
 
-- `actions.SendAction`: handles the UI interaction and coordinates the capture.
-- `services.ImageService`: pixel mapping and image generation.
-- `requests.PostImageRequest`: network communication with the backend.
-- `dto.ImageDTO`: data object for image transmission.
+```
+intellij-plugin/
+  src/                 — Java source code
+  build.gradle.kts     — Gradle build script
+  gradle/              — Gradle wrapper
+  gradlew / gradlew.bat
+LICENSE
+README.md
+paper.pdf
+```
 
 ## Requirements
 
-- JDK 17 or newer.
-- A running analysis backend. Start the `back-end-pytorch` service first; by
-  default the plugin calls `http://localhost:8000/api/v1/analyze/image`.
+- JDK 17+
+- IntelliJ IDEA 2023.1+ (Community or Ultimate)
+- MinimapSignatures backend running on `http://localhost:8000`
 
-## Running in development
+## Installation
 
-1. Make sure the backend is running on `http://localhost:8000`.
-2. Open the project in IntelliJ IDEA.
-3. Use the Gradle `Run Plugin` run configuration to launch a development IDE
-   instance with the plugin enabled.
-4. Open a file and trigger the action from the editor popup menu (right-click)
-   or the main toolbar.
+```bash
+# open intellij-plugin/ in IntelliJ IDEA, then run:
+./gradlew runIde
+```
 
-## Configuration
+A sandbox IntelliJ IDE will open with the plugin enabled. Open any source file, right-click in the editor, and select **MinimapSignatures: Analyse**. A balloon notification with the top-3 predictions should appear.
 
-The backend URL and API key are defined as constants at the top of
-`src/main/java/requests/PostImageRequest.java` (`API_URL` and `API_KEY`). Change
-`API_URL` if your backend runs on a different host or port.
+The backend URL and API key are defined as constants at the top of `src/main/java/requests/PostImageRequest.java`.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
