@@ -1,6 +1,9 @@
 package dto;
 
-import java.util.Base64;
+import com.google.gson.annotations.SerializedName;
 
-public record ImageDTO(String projectName,String imageHash, String base64Image) {
-}
+public record ImageDTO(
+        @SerializedName("project") String projectName,
+        @SerializedName("hash") String imageHash,
+        @SerializedName("image") String base64Image
+) {}

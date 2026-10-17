@@ -10,13 +10,6 @@
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor>SourceCodeMinimaps</vendor>
 
-    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
-<!--    <description><![CDATA[-->
-<!--        Enter short description for your plugin here.<br>-->
-<!--        <em>most HTML tags may be used</em>-->
-<!--        ]]></description>-->
-
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
@@ -32,20 +25,47 @@
                                key="plugin.notification.group.name"
                                bundle="messages.MyMessageBundle" />
     </extensions>
-    <actions>
 
+    <actions>
+        <group id="SourceCodeMinimaps.Group"
+               text="MinimapSignatures"
+               description="Análise de assinaturas de código via minimap"
+               popup="true"
+               icon="AllIcons.Actions.MenuSaveall">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="MainToolbarRight" anchor="last"/>
+            <add-to-group group-id="MainToolBar" anchor="last"/>
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+
+            <action id="SourceCodeMinimaps.ChooseStrategyAction"
+                    class="actions.ChooseStrategyAction"
+                    text="Selecionar Modo de Análise..."
+                    description="Escolha explicitamente entre arquivo atual, diretório individual ou minimap médio"/>
+
+            <separator/>
+
+            <action id="SourceCodeMinimaps.AnalyzeCurrentFileAction"
+                    class="actions.AnalyzeCurrentFileAction"
+                    text="Caminho 0: Analisar Arquivo Atual"
+                    description="Analisa o arquivo atualmente aberto no editor"/>
+
+            <action id="SourceCodeMinimaps.AnalyzeDirectoryAction"
+                    class="actions.AnalyzeDirectoryAction"
+                    text="Caminho A: Análise Individual de Diretório"
+                    description="Analisa individualmente cada arquivo elegível de um único diretório selecionado"/>
+
+            <action id="SourceCodeMinimaps.AnalyzeProjectAverageAction"
+                    class="actions.AnalyzeProjectAverageAction"
+                    text="Caminho B: Análise por Minimap Médio"
+                    description="Gera e analisa o minimap médio da extensão predominante do projeto"/>
+        </group>
+
+        <!-- Ação legada mantida para compatibilidade -->
         <action id="SourceCodeMinimaps.SendAction"
                 class="actions.SendAction"
-                text="Capturar Código para Imagem"
-                description="Captura até 128 linhas do editor e envia para o servidor"
-                icon="AllIcons.Actions.MenuSaveall"> <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-
-            <add-to-group group-id="MainToolbarRight" anchor="last"/>
-
-            <add-to-group group-id="MainToolBar" anchor="last"/>
-
-        </action>
-
+                text="MinimapSignatures: Analisar"
+                description="Seleciona a estratégia de análise e envia para o servidor"
+                icon="AllIcons.Actions.MenuSaveall" />
     </actions>
 
 </idea-plugin>
